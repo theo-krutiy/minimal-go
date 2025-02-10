@@ -1,10 +1,15 @@
 package server
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/theo-krutiy/minimal-go/internal/db"
+)
 
 type Server struct {
-	s *http.Server
-	r *http.ServeMux
+	s  *http.Server
+	r  *http.ServeMux
+	Db db.Database
 }
 
 func New() *Server {

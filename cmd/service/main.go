@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/theo-krutiy/minimal-go/internal/db"
 	"github.com/theo-krutiy/minimal-go/internal/server"
 )
 
@@ -20,6 +21,7 @@ func main() {
 
 func run() error {
 	s := server.New()
+	s.Db = db.NewPostgres()
 	addr := fmt.Sprintf("%s:%s", HOST, PORT)
 	err := http.ListenAndServe(addr, s)
 
