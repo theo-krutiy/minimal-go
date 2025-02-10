@@ -2,17 +2,13 @@ package auth
 
 import (
 	"errors"
+
+	"github.com/theo-krutiy/minimal-go/internal/models"
 )
 
 type db interface {
 	CreateNewUser(login, passwordHash string) (string, error)
-	ReadUser(user *userInDatabase) error
-}
-
-type userInDatabase struct {
-	Id           string
-	Login        string
-	PasswordHash string
+	ReadUser(user *models.UserInDatabase) error
 }
 
 func CreateNewUser(login, password string, db db) (string, error) {
@@ -30,7 +26,7 @@ func CreateNewUser(login, password string, db db) (string, error) {
 }
 
 func ValidateCredentials(login, password string, db db) (string, error) {
-	user := userInDatabase{Login: login}
+	user := models.UserInDatabase{Login: login}
 	if err := db.ReadUser(&user); err != nil {
 		return "", errors.New("couldn't read user in database")
 	}
