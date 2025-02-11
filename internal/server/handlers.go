@@ -40,3 +40,32 @@ func (s *Server) handleCreateUser() http.HandlerFunc {
 		}
 	}
 }
+
+func (s *Server) handleAuthenticate() http.HandlerFunc {
+	type request struct {
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	}
+	type response struct {
+		Token string `json:"token"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req request
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, fmt.Sprintf("%v", err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		token, err := auth.ValidateCredentials(req.Login, req.Password, s.Db)
+		if err != nil {
+			http.Error(w, "", http.StatusUnauthorized)
+			return
+		}
+
+		res := response{Token: token}
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "Couldn't unmarshall response", http.StatusInternalServerError)
+			return
+		}
+	}
+}
