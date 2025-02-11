@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -20,10 +21,15 @@ func main() {
 }
 
 func run() error {
-	s := server.New()
-	s.Db = db.NewPostgres()
-	addr := fmt.Sprintf("%s:%s", HOST, PORT)
-	err := http.ListenAndServe(addr, s)
+	pg, err := db.NewPostgres(context.Background(), "postgres://postgres:password@localhost:5432/postgres")
+	if err != nil {
+		return err
+	}
 
+	s := server.New()
+	s.Db = pg
+
+	addr := fmt.Sprintf("%s:%s", HOST, PORT)
+	err = http.ListenAndServe(addr, s)
 	return err
 }
