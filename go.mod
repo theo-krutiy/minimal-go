@@ -3,6 +3,7 @@ module github.com/theo-krutiy/minimal-go
 go 1.23.2
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v5 v5.7.2
 	golang.org/x/crypto v0.33.0
