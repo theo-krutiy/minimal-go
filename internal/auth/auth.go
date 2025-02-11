@@ -7,12 +7,16 @@ import (
 )
 
 type db interface {
-	CreateNewUser(login, passwordHash string) (string, error)
+	CreateNewUser(login string, passwordHash []byte) (string, error)
 	ReadUser(user *models.UserInDatabase) error
 }
 
 func CreateNewUser(login, password string, db db) (string, error) {
-	pwdHash, err := hashPassword(password)
+	pwdBytes := []byte(password)
+	if len(pwdBytes) > 72 {
+		return "", errors.New("password too long")
+	}
+	pwdHash, err := hashPassword(pwdBytes)
 	if err != nil {
 		return "", errors.New("couldn't hash password")
 	}
@@ -26,11 +30,15 @@ func CreateNewUser(login, password string, db db) (string, error) {
 }
 
 func ValidateCredentials(login, password string, db db) (string, error) {
+	pwdBytes := []byte(password)
+	if len(pwdBytes) > 72 {
+		return "", errors.New("incorrect password")
+	}
 	user := models.UserInDatabase{Login: login}
 	if err := db.ReadUser(&user); err != nil {
 		return "", errors.New("couldn't read user in database")
 	}
-	if err := comparePassword(password, user.PasswordHash); err != nil {
+	if err := comparePassword(pwdBytes, user.PasswordHash); err != nil {
 		return "", errors.New("incorrect password")
 	}
 

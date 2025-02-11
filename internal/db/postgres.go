@@ -25,7 +25,7 @@ func NewPostgres(ctx context.Context, connString string) (*Postgres, error) {
 	return &Postgres{pool}, nil
 }
 
-func (p *Postgres) CreateNewUser(login, passwordHash string) (string, error) {
+func (p *Postgres) CreateNewUser(login string, passwordHash []byte) (string, error) {
 	var userId string
 	err := p.pool.QueryRow(context.Background(), "INSERT INTO users (login, password_hash) VALUES ($1, $2)  RETURNING id;", login, passwordHash).Scan(&userId)
 	if err != nil {
