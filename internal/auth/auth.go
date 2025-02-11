@@ -29,20 +29,12 @@ func CreateNewUser(login, password string, db db) (string, error) {
 	return dummyId, nil
 }
 
-func ValidateCredentials(login, password string, db db) (string, error) {
-	pwdBytes := []byte(password)
-	if len(pwdBytes) > 72 {
-		return "", errors.New("incorrect password")
-	}
-	user := models.UserInDatabase{Login: login}
-	if err := db.ReadUser(&user); err != nil {
-		return "", errors.New("couldn't read user in database")
-	}
-	if err := comparePassword(pwdBytes, user.PasswordHash); err != nil {
-		return "", errors.New("incorrect password")
+func Authenticate(login, password string, secret []byte, db db) (string, error) {
+	if err := ValidateCredentials(login, password, db); err != nil {
+		return "", err
 	}
 
-	token, err := issueNewJWT()
+	token, err := issueNewJWT(secret)
 	if err != nil {
 		return "", errors.New("error issuing jwt")
 	}
@@ -50,6 +42,21 @@ func ValidateCredentials(login, password string, db db) (string, error) {
 	return token, nil
 }
 
-func ValidateJWT(token string) error {
-	return validateJWT(token)
+func ValidateCredentials(login, password string, db db) error {
+	pwdBytes := []byte(password)
+	if len(pwdBytes) > 72 {
+		return errors.New("incorrect password")
+	}
+	user := models.UserInDatabase{Login: login}
+	if err := db.ReadUser(&user); err != nil {
+		return errors.New("couldn't read user in database")
+	}
+	if err := comparePassword(pwdBytes, user.PasswordHash); err != nil {
+		return errors.New("incorrect password")
+	}
+	return nil
+}
+
+func ValidateToken(token string, secret []byte) error {
+	return validateJWT(token, secret)
 }

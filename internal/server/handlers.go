@@ -56,7 +56,7 @@ func (s *Server) handleAuthenticate() http.HandlerFunc {
 			return
 		}
 
-		token, err := auth.ValidateCredentials(req.Login, req.Password, s.Db)
+		token, err := auth.Authenticate(req.Login, req.Password, s.secret, s.Db)
 		if err != nil {
 			http.Error(w, "", http.StatusUnauthorized)
 			return

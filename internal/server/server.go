@@ -7,9 +7,10 @@ import (
 )
 
 type Server struct {
-	s  *http.Server
-	r  *http.ServeMux
-	Db db.Database
+	s      *http.Server
+	r      *http.ServeMux
+	Db     db.Database
+	secret []byte
 }
 
 func New() *Server {
