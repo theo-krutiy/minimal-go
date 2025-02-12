@@ -6,12 +6,12 @@ import (
 	"github.com/theo-krutiy/minimal-go/internal/models"
 )
 
-type db interface {
+type Database interface {
 	CreateNewUser(login string, passwordHash []byte) (string, error)
 	ReadUser(user *models.UserInDatabase) error
 }
 
-func CreateNewUser(login, password string, db db) (string, error) {
+func CreateNewUser(login, password string, db Database) (string, error) {
 	pwdBytes := []byte(password)
 	if len(pwdBytes) > 72 {
 		return "", errors.New("password too long")
@@ -29,7 +29,7 @@ func CreateNewUser(login, password string, db db) (string, error) {
 	return dummyId, nil
 }
 
-func Authenticate(login, password string, secret []byte, db db) (string, error) {
+func Authenticate(login, password string, secret []byte, db Database) (string, error) {
 	if err := ValidateCredentials(login, password, db); err != nil {
 		return "", err
 	}
@@ -42,7 +42,7 @@ func Authenticate(login, password string, secret []byte, db db) (string, error) 
 	return token, nil
 }
 
-func ValidateCredentials(login, password string, db db) error {
+func ValidateCredentials(login, password string, db Database) error {
 	pwdBytes := []byte(password)
 	if len(pwdBytes) > 72 {
 		return errors.New("incorrect password")
