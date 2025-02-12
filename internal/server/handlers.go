@@ -69,3 +69,7 @@ func (s *Server) handleAuthenticate() http.HandlerFunc {
 		}
 	}
 }
+
+func (s *Server) handleProtectedRoute(w http.ResponseWriter, _ *http.Request) {
+	fmt.Fprint(w, "this is a protected resource")
+}
