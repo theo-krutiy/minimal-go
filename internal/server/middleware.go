@@ -7,7 +7,7 @@ import (
 	"github.com/theo-krutiy/minimal-go/internal/auth"
 )
 
-func (s *Server) RequiresLogin(next http.HandlerFunc) http.HandlerFunc {
+func (s *Server) requiresLogin(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
