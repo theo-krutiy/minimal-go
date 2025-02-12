@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/theo-krutiy/minimal-go/internal/auth"
+	"github.com/theo-krutiy/minimal-go/internal/models"
+	"github.com/theo-krutiy/minimal-go/internal/shop"
 )
 
 func (s *Server) handleCreateUser() http.HandlerFunc {
@@ -70,6 +74,40 @@ func (s *Server) handleAuthenticate() http.HandlerFunc {
 	}
 }
 
-func (s *Server) handleProtectedRoute(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprint(w, "this is a protected resource")
+func (s *Server) handleGetItems() http.HandlerFunc {
+	type response struct {
+		Page       []models.ItemInDatabase `json:"page"`
+		TotalCount int                     `json:"totalCount"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		query, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil {
+			http.Error(w, "", http.StatusBadRequest)
+			return
+		}
+		offset, err := strconv.Atoi(query.Get("offset"))
+		if err != nil {
+			offset = 0
+		}
+		limit, err := strconv.Atoi((query.Get("limit")))
+		if err != nil {
+			limit = 10
+		}
+		q := query.Get("query")
+
+		items, totalCount, err := shop.GetItems(q, offset, limit, s.Db)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		page := make([]models.ItemInDatabase, len(items))
+		for i, item := range items {
+			page[i] = *item
+		}
+
+		res := response{page, totalCount}
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "", http.StatusInternalServerError)
+		}
+
+	}
 }

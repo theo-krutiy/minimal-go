@@ -3,8 +3,9 @@ package db
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/theo-krutiy/minimal-go/internal/models"
@@ -44,4 +45,23 @@ func (p *Postgres) ReadUser(user *models.UserInDatabase) error {
 	default:
 		return errors.New("unknown error")
 	}
+}
+
+func (p *Postgres) ReadItems(query string, offset, limit int) (page []*models.ItemInDatabase, totalResults int, err error) {
+	query = fmt.Sprintf("%v%%", query)
+	batch := &pgx.Batch{}
+	batch.Queue(
+		"SELECT * FROM items WHERE name LIKE $1 ORDER BY name OFFSET $2 LIMIT $3;",
+		query, offset, limit,
+	).Query(func(rows pgx.Rows) error {
+		page, err = pgx.CollectRows(rows, pgx.RowToAddrOfStructByNameLax[models.ItemInDatabase])
+		return err
+	})
+	batch.Queue("SELECT COUNT(*) FROM items WHERE name LIKE $1;", query).QueryRow(func(row pgx.Row) error {
+		err := row.Scan(&totalResults)
+		return err
+	})
+
+	err = p.pool.SendBatch(context.Background(), batch).Close()
+	return
 }

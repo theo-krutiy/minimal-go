@@ -7,9 +7,9 @@ type UserInDatabase struct {
 }
 
 type ItemInDatabase struct {
-	Id             string
-	Name           string
-	CountAvailable int
-	PriceInteger   int
-	PriceDecimal   int
+	Id             string `json:"id"`
+	Name           string `json:"name"`
+	CountAvailable int    `json:"count_available"`
+	PriceInteger   int    `json:"price_integer"`
+	PriceDecimal   int    `json:"price_decimal"`
 }

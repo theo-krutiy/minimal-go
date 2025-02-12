@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/theo-krutiy/minimal-go/internal/auth"
+	"github.com/theo-krutiy/minimal-go/internal/shop"
 )
 
 type Server struct {
@@ -11,6 +12,7 @@ type Server struct {
 	r  *http.ServeMux
 	Db interface {
 		auth.Database
+		shop.Database
 	}
 	secret []byte
 }
