@@ -3,13 +3,15 @@ package server
 import (
 	"net/http"
 
-	"github.com/theo-krutiy/minimal-go/internal/db"
+	"github.com/theo-krutiy/minimal-go/internal/auth"
 )
 
 type Server struct {
-	s      *http.Server
-	r      *http.ServeMux
-	Db     db.Database
+	s  *http.Server
+	r  *http.ServeMux
+	Db interface {
+		auth.Database
+	}
 	secret []byte
 }
 
