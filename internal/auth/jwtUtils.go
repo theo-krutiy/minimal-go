@@ -7,14 +7,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func newClaims() jwt.Claims {
-	return jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-	}
-}
-
 func issueNewJWT(secret []byte) (string, error) {
-	claims := newClaims()
+	claims := jwt.MapClaims{
+		"exp": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	ss, err := token.SignedString(secret)
 	if err != nil {
@@ -25,13 +21,13 @@ func issueNewJWT(secret []byte) (string, error) {
 
 func validateJWT(tokenString string, secret []byte) error {
 	var kf = func(token *jwt.Token) (interface{}, error) { return secret, nil }
-	token, err := jwt.Parse(tokenString, kf, jwt.WithExpirationRequired())
+	_, err := jwt.Parse(tokenString, kf, jwt.WithExpirationRequired(), jwt.WithValidMethods([]string{"HS256"}))
 	switch {
-	case token.Valid:
-		return nil
 	case errors.Is(err, jwt.ErrTokenExpired):
 		return errors.New("token expired")
-	default:
+	case err != nil:
 		return errors.New("malformed token")
+	default:
+		return nil
 	}
 }
