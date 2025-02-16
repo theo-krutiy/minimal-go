@@ -1,12 +1,12 @@
 package models
 
-type UserInDatabase struct {
+type User struct {
 	Id           string `db:"id"`
 	Login        string `db:"login"`
 	PasswordHash []byte `db:"password_hash"`
 }
 
-type ItemInDatabase struct {
+type Item struct {
 	Id             string `json:"id" db:"id"`
 	Name           string `json:"name" db:"name"`
 	CountAvailable int    `json:"count_available" db:"count_available"`

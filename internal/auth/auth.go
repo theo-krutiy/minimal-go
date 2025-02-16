@@ -8,7 +8,7 @@ import (
 
 type Database interface {
 	CreateNewUser(login string, passwordHash []byte) (string, error)
-	ReadUser(user *models.UserInDatabase) error
+	ReadUser(user *models.User) error
 }
 
 func CreateNewUser(login, password string, db Database) (string, error) {
@@ -47,7 +47,7 @@ func ValidateCredentials(login, password string, db Database) error {
 	if len(pwdBytes) > 72 {
 		return errors.New("incorrect password")
 	}
-	user := models.UserInDatabase{Login: login}
+	user := models.User{Login: login}
 	if err := db.ReadUser(&user); err != nil {
 		return errors.New("couldn't read user in database")
 	}

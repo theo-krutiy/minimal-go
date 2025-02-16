@@ -76,8 +76,8 @@ func (s *Server) handleAuthenticate() http.HandlerFunc {
 
 func (s *Server) handleGetItems() http.HandlerFunc {
 	type response struct {
-		Page       []models.ItemInDatabase `json:"page"`
-		TotalCount int                     `json:"totalCount"`
+		Page       []models.Item `json:"page"`
+		TotalCount int           `json:"totalCount"`
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		query, err := url.ParseQuery(r.URL.RawQuery)
@@ -99,7 +99,7 @@ func (s *Server) handleGetItems() http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		page := make([]models.ItemInDatabase, len(items))
+		page := make([]models.Item, len(items))
 		for i, item := range items {
 			page[i] = *item
 		}
