@@ -25,3 +25,20 @@ type Cart struct {
 	UserId string        `json:"user_id" db:"user_id"`
 	Items  []*ItemInCart `json:"items"`
 }
+
+type Order struct {
+	Id          string         `json:"id" db:"id"`
+	UserId      string         `json:"user_id" db:"user_id"`
+	TotalPrice  int            `json:"total_price" db:"total_price"`
+	State       string         `json:"state" db:"state"`
+	CreatedAt   string         `json:"created_at" db:"created_at"`
+	CompletedAt string         `json:"completed_at" db:"completed_at"`
+	Items       []*ItemInOrder `json:"items"`
+}
+
+type ItemInOrder struct {
+	ItemId  string `json:"item_id" db:"item_id"`
+	OrderId string `db:"order_id"`
+	Count   int    `json:"count" db:"count"`
+	Price   int    `json:"price" db:"price"`
+}
