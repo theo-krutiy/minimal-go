@@ -8,8 +8,7 @@ CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
     count_available INT NOT NULL CHECK (count_available >= 0),
-    price_integer INT NOT NULL CHECK (price_integer >= 0),
-    price_decimal INT NOT NULL CHECK (price_decimal >= 0 AND price_decimal < 100)
+    price INT NOT NULL CHECK (price >= 0),
 );
 
 CREATE TABLE items_in_cart (
