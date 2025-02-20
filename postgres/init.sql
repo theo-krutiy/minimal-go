@@ -11,11 +11,16 @@ CREATE TABLE items (
     price INT NOT NULL CHECK (price >= 0),
 );
 
-CREATE TABLE items_in_cart (
+CREATE TABLE carts (
+    id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
+);
+
+CREATE TABLE items_in_cart (
     item_id INT REFERENCES items(id) ON DELETE CASCADE,
+    cart_id INT REFERENCES carts(id) ON DELETE CASCADE,
     count_in_cart INT NOT NULL CHECK (count_in_cart >= 0),
-    CONSTRAINT unique_cart_item UNIQUE(user_id, item_id)
+    CONSTRAINT unique_cart_item UNIQUE(item_id, cart_id)
 );
 
 CREATE TABLE transactions (
