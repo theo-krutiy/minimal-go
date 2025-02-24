@@ -65,3 +65,56 @@ func (p *Postgres) ReadItems(query string, offset, limit int) (page []*models.It
 	err = p.pool.SendBatch(context.Background(), batch).Close()
 	return
 }
+
+func (p *Postgres) GetCart(userId string) (*models.Cart, error) {
+	cart := &models.Cart{UserId: userId}
+	err := p.pool.QueryRow(context.Background(), "SELECT id FROM carts WHERE user_id = $1;", userId).Scan(&cart.Id)
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
+		return nil, errors.New("cart doesn't exist")
+	case err != nil:
+		return nil, errors.New("unknown error")
+	}
+	rows, err := p.pool.Query(context.Background(), "SELECT item_id, count_in_cart FROM items_in_cart WHERE cart_id = $1;", cart.Id)
+	if err != nil {
+		return nil, err
+	}
+	cart.Items, err = pgx.CollectRows(rows, pgx.RowToAddrOfStructByNameLax[models.ItemInCart])
+	if err != nil {
+		return nil, err
+	}
+	return cart, nil
+}
+
+func (p *Postgres) CreateCart(userId string) (string, error) {
+	var cartId string
+	err := p.pool.QueryRow(context.Background(), "INSERT INTO carts (user_id) VALUES $1 RETURNING id;", userId).Scan(&cartId)
+	if err != nil {
+		return "", err
+	}
+
+	return cartId, nil
+}
+
+// TODO: handle negative increment
+func (p *Postgres) IncrementItemInCart(cartId, itemId string, increment int) error {
+	query := `
+		INSERT INTO items_in_cart (cart_id, item_id, count_in_cart)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (cart_id, item_id) DO UPDATE 
+		SET count_in_cart = items_in_cart.count_in_cart + EXCLUDED.count_in_cart
+	`
+
+	_, err := p.pool.Exec(context.Background(), query, cartId, itemId, increment)
+	return err
+}
+
+func (p *Postgres) EmptyCart(cartId string) error {
+	query := `DELETE FROM items_in_cart WHERE cart_id = $1`
+	_, err := p.pool.Exec(context.Background(), query, cartId)
+	return err
+}
+
+func (p *Postgres) ConvertCartIntoOrder(cartId string) (string, error) {
+	return "", nil
+}
