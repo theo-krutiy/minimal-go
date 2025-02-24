@@ -8,12 +8,12 @@ CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
     count_available INT NOT NULL CHECK (count_available >= 0),
-    price INT NOT NULL CHECK (price >= 0),
+    price INT NOT NULL CHECK (price >= 0)
 );
 
 CREATE TABLE carts (
     id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE items_in_cart (
@@ -36,5 +36,5 @@ CREATE TABLE items_in_order (
     item_id INT REFERENCES items(id) ON DELETE CASCADE,    
     order_id INT REFERENCES orders(id) ON DELETE CASCADE,
     count INT NOT NULL CHECK (count >= 0),
-    price INT NOT NULL CHECK (price >= 0),
+    price INT NOT NULL CHECK (price >= 0)
 );
