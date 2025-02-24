@@ -111,3 +111,21 @@ func (s *Server) handleGetItems() http.HandlerFunc {
 
 	}
 }
+
+func (s *Server) handleGetCart() http.HandlerFunc {
+	type response struct {
+		Cart models.Cart `json:"cart"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		userId := r.PathValue("userId")
+		cart, err := shop.GetCart(userId, s.Db)
+		if err != nil {
+			http.Error(w, "", http.StatusInternalServerError)
+			return
+		}
+		res := response{Cart: *cart}
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			http.Error(w, "", http.StatusInternalServerError)
+		}
+	}
+}
