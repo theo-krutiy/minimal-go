@@ -98,6 +98,7 @@ func (s *Server) handleGetItems() http.HandlerFunc {
 		items, totalCount, err := shop.GetItems(q, offset, limit, s.Db)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		page := make([]models.Item, len(items))
 		for i, item := range items {
