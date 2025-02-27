@@ -8,6 +8,7 @@ const (
 	ErrDBConflict
 	ErrValidation
 	ErrUnknown
+	ErrNoData
 )
 
 func (e Error) Error() string { return "" }
