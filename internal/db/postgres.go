@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/theo-krutiy/minimal-go/internal/core"
+	"github.com/theo-krutiy/minimal-go/internal/errcodes"
 	"github.com/theo-krutiy/minimal-go/internal/models"
 )
 
@@ -36,9 +36,9 @@ func (p *Postgres) CreateNewUser(login string, passwordHash []byte) (string, err
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				return "", core.ErrDBConflict
+				return "", errcodes.DBConflict
 			}
-			return "", core.ErrDBUnknown
+			return "", errcodes.DBUnknown
 		}
 	}
 	return userId, nil
@@ -50,9 +50,9 @@ func (p *Postgres) ReadUser(user *models.User) error {
 	case err == nil:
 		return nil
 	case errors.Is(err, pgx.ErrNoRows):
-		return core.ErrDBNoData
+		return errcodes.DBNoData
 	default:
-		return core.ErrDBUnknown
+		return errcodes.DBUnknown
 	}
 }
 
@@ -73,7 +73,7 @@ func (p *Postgres) ReadItems(query string, offset, limit int) (page []*models.It
 
 	err = p.pool.SendBatch(context.Background(), batch).Close()
 	if err != nil {
-		err = core.ErrDBUnknown
+		err = errcodes.DBUnknown
 	}
 	return
 }
@@ -83,17 +83,17 @@ func (p *Postgres) GetCart(userId string) (*models.Cart, error) {
 	err := p.pool.QueryRow(context.Background(), "SELECT id FROM carts WHERE user_id = $1;", userId).Scan(&cart.Id)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		return nil, core.ErrDBNoData
+		return nil, errcodes.DBNoData
 	case err != nil:
-		return nil, core.ErrDBUnknown
+		return nil, errcodes.DBUnknown
 	}
 	rows, err := p.pool.Query(context.Background(), "SELECT item_id, count_in_cart FROM items_in_cart WHERE cart_id = $1;", cart.Id)
 	if err != nil {
-		return nil, core.ErrDBUnknown
+		return nil, errcodes.DBUnknown
 	}
 	cart.Items, err = pgx.CollectRows(rows, pgx.RowToAddrOfStructByNameLax[models.ItemInCart])
 	if err != nil {
-		return nil, core.ErrDBUnknown
+		return nil, errcodes.DBUnknown
 	}
 	return cart, nil
 }
@@ -102,7 +102,7 @@ func (p *Postgres) CreateCart(userId string) (string, error) {
 	var cartId string
 	err := p.pool.QueryRow(context.Background(), "INSERT INTO carts (user_id) VALUES $1 RETURNING id;", userId).Scan(&cartId)
 	if err != nil {
-		return "", core.ErrDBUnknown
+		return "", errcodes.DBUnknown
 	}
 
 	return cartId, nil
@@ -125,7 +125,7 @@ func (p *Postgres) EmptyCart(cartId string) error {
 	query := `DELETE FROM items_in_cart WHERE cart_id = $1`
 	_, err := p.pool.Exec(context.Background(), query, cartId)
 	if err != nil {
-		return core.ErrDBUnknown
+		return errcodes.DBUnknown
 	}
 	return nil
 }

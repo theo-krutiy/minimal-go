@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/theo-krutiy/minimal-go/internal/core"
+	"github.com/theo-krutiy/minimal-go/internal/errcodes"
 	"github.com/theo-krutiy/minimal-go/internal/models"
 )
 
@@ -18,17 +18,17 @@ type Database interface {
 
 func GetItems(query string, offset, limit int, db Database) (page []*models.Item, totalResults int, err error) {
 	if limit <= 0 {
-		err = fmt.Errorf("limit must be positive%w", core.ErrValidation)
+		err = fmt.Errorf("limit must be positive%w", errcodes.Validation)
 		return
 	}
 	if offset < 0 {
-		err = fmt.Errorf("offset must not be negative%w", core.ErrValidation)
+		err = fmt.Errorf("offset must not be negative%w", errcodes.Validation)
 		return
 	}
 
 	page, totalResults, err = db.ReadItems(query, offset, limit)
 	if err != nil {
-		err = core.ErrUnknown
+		err = errcodes.Unknown
 	}
 	return
 }
@@ -38,17 +38,17 @@ func GetCart(userId string, db Database) (cart *models.Cart, err error) {
 	switch {
 	case err == nil:
 		return cart, nil
-	case errors.Is(err, core.ErrDBNoData):
-		return nil, core.ErrNoData
+	case errors.Is(err, errcodes.DBNoData):
+		return nil, errcodes.NoData
 	default:
-		return nil, core.ErrUnknown
+		return nil, errcodes.Unknown
 	}
 }
 
 func AddItemToCart(cartId, itemId string, countAdded *int, db Database) error {
 	switch {
 	case *countAdded <= 0:
-		return fmt.Errorf("count must be positive%w", core.ErrValidation)
+		return fmt.Errorf("count must be positive%w", errcodes.Validation)
 	case countAdded == nil:
 		v := 1
 		countAdded = &v
@@ -56,7 +56,7 @@ func AddItemToCart(cartId, itemId string, countAdded *int, db Database) error {
 
 	err := db.IncrementItemInCart(cartId, itemId, *countAdded)
 	if err != nil {
-		return core.ErrUnknown
+		return errcodes.Unknown
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func RemoveItemFromCart(cartId, itemId string, countRemoved *int, db Database) e
 
 	err := db.IncrementItemInCart(cartId, itemId, *countRemoved*-1)
 	if err != nil {
-		return core.ErrUnknown
+		return errcodes.Unknown
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func RemoveItemFromCart(cartId, itemId string, countRemoved *int, db Database) e
 func EmptyCart(cartId string, db Database) error {
 	err := db.EmptyCart(cartId)
 	if err != nil {
-		return core.ErrUnknown
+		return errcodes.Unknown
 	}
 	return nil
 }
@@ -88,7 +88,7 @@ func EmptyCart(cartId string, db Database) error {
 func ConvertCartIntoOrder(cartId string, db Database) (string, error) {
 	orderId, err := db.ConvertCartIntoOrder(cartId)
 	if err != nil {
-		return "", core.ErrUnknown
+		return "", errcodes.Unknown
 	}
 
 	return orderId, nil
