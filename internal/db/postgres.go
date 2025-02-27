@@ -89,7 +89,7 @@ func (p *Postgres) GetCart(userId string) (*models.Cart, error) {
 	}
 	rows, err := p.pool.Query(context.Background(), "SELECT item_id, count_in_cart FROM items_in_cart WHERE cart_id = $1;", cart.Id)
 	if err != nil {
-		return nil, core.ErrDBNoData
+		return nil, core.ErrDBUnknown
 	}
 	cart.Items, err = pgx.CollectRows(rows, pgx.RowToAddrOfStructByNameLax[models.ItemInCart])
 	if err != nil {
