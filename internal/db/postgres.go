@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/theo-krutiy/minimal-go/internal/core"
 	"github.com/theo-krutiy/minimal-go/internal/models"
 )
 
@@ -30,20 +33,26 @@ func (p *Postgres) CreateNewUser(login string, passwordHash []byte) (string, err
 	var userId string
 	err := p.pool.QueryRow(context.Background(), "INSERT INTO users (login, password_hash) VALUES ($1, $2)  RETURNING id;", login, passwordHash).Scan(&userId)
 	if err != nil {
-		return "", err
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == pgerrcode.UniqueViolation {
+				return "", core.ErrDBConflict
+			}
+			return "", core.ErrDBUnknown
+		}
 	}
 	return userId, nil
 }
 
 func (p *Postgres) ReadUser(user *models.User) error {
 	err := p.pool.QueryRow(context.Background(), "SELECT id, password_hash FROM users WHERE login = $1;", user.Login).Scan(&user.Id, &user.PasswordHash)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		return nil
-	case pgx.ErrNoRows:
-		return errors.New("unknown login")
+	case errors.Is(err, pgx.ErrNoRows):
+		return core.ErrDBNoData
 	default:
-		return errors.New("unknown error")
+		return core.ErrDBUnknown
 	}
 }
 
@@ -63,6 +72,9 @@ func (p *Postgres) ReadItems(query string, offset, limit int) (page []*models.It
 	})
 
 	err = p.pool.SendBatch(context.Background(), batch).Close()
+	if err != nil {
+		err = core.ErrDBUnknown
+	}
 	return
 }
 
@@ -71,17 +83,17 @@ func (p *Postgres) GetCart(userId string) (*models.Cart, error) {
 	err := p.pool.QueryRow(context.Background(), "SELECT id FROM carts WHERE user_id = $1;", userId).Scan(&cart.Id)
 	switch {
 	case errors.Is(err, pgx.ErrNoRows):
-		return nil, errors.New("cart doesn't exist")
+		return nil, core.ErrDBNoData
 	case err != nil:
-		return nil, errors.New("unknown error")
+		return nil, core.ErrDBUnknown
 	}
 	rows, err := p.pool.Query(context.Background(), "SELECT item_id, count_in_cart FROM items_in_cart WHERE cart_id = $1;", cart.Id)
 	if err != nil {
-		return nil, err
+		return nil, core.ErrDBNoData
 	}
 	cart.Items, err = pgx.CollectRows(rows, pgx.RowToAddrOfStructByNameLax[models.ItemInCart])
 	if err != nil {
-		return nil, err
+		return nil, core.ErrDBUnknown
 	}
 	return cart, nil
 }
@@ -90,7 +102,7 @@ func (p *Postgres) CreateCart(userId string) (string, error) {
 	var cartId string
 	err := p.pool.QueryRow(context.Background(), "INSERT INTO carts (user_id) VALUES $1 RETURNING id;", userId).Scan(&cartId)
 	if err != nil {
-		return "", err
+		return "", core.ErrDBUnknown
 	}
 
 	return cartId, nil
@@ -112,7 +124,10 @@ func (p *Postgres) IncrementItemInCart(cartId, itemId string, increment int) err
 func (p *Postgres) EmptyCart(cartId string) error {
 	query := `DELETE FROM items_in_cart WHERE cart_id = $1`
 	_, err := p.pool.Exec(context.Background(), query, cartId)
-	return err
+	if err != nil {
+		return core.ErrDBUnknown
+	}
+	return nil
 }
 
 func (p *Postgres) ConvertCartIntoOrder(cartId string) (string, error) {
